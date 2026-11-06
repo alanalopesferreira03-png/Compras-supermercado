@@ -117,6 +117,14 @@ tr.hl td{background:var(--good-soft)}
 .lrow.ck{background:var(--good-soft)}
 .lrow input[type=checkbox]{width:22px;height:22px}
 .lrow .lbl{display:none}
+/* Formulário de produto compacto */
+.modal:has(#pfName){width:min(400px,100%);padding:14px;gap:8px}
+.modal:has(#pfName) h2{font-size:1.05rem}
+.modal:has(#pfName) label{font-size:.76rem;gap:3px}
+.modal:has(#pfName) input[type=text],.modal:has(#pfName) select{min-height:34px;padding:4px 8px;font-size:.88rem}
+.modal:has(#pfName) .two{gap:8px}
+.modal:has(#pfName) .acts button{min-height:36px;padding:6px 14px}
+@media (max-width:760px){.modal:has(#pfName) .two{grid-template-columns:1fr 1fr}.overlay{padding:10px}}
 [hidden]{display:none!important}
 @media (max-width:760px){
   .stores{grid-template-columns:1fr}
@@ -134,7 +142,7 @@ tr.hl td{background:var(--good-soft)}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>Mercado Inteligente</h1><span>Controle de compras</span></div><b id="teste-conexao" style="color:#d00;font-size:1.1rem;align-self:center">TESTE</b>
+    <div class="brand"><h1>Mercado Inteligente</h1><span>Controle de compras</span></div>
     <div class="monthbar"><select id="ymSel" aria-label="Pesquisa do mês"></select><button id="newSurvey" class="primary">Nova pesquisa</button></div>
   </header>
   <nav class="tabs" id="tabs" role="tablist">
