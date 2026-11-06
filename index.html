@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
 <meta charset="utf-8">
 <title>Mercado Inteligente</title>
@@ -7,6 +7,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2447c9">
+<meta name="color-scheme" content="light">
 <meta property="og:title" content="Mercado Inteligente">
 <meta property="og:description" content="Controle de compras da casa">
 <meta property="og:image" content="cover.png">
@@ -19,7 +20,7 @@
   --accent:#2447c9; --accent-fg:#ffffff; --accent-soft:#e5eafc;
   --good:#147a4a; --good-soft:#ddf3e7; --warn:#97580a; --warn-soft:#fbecd0; --bad:#b3261e; --bad-soft:#f9dedb;
   --c1:#2447c9; --c2:#d9822b; --c3:#16906b; --grid:#dce2df;
-  --f-display:"Bricolage Grotesque","Trebuchet MS",sans-serif; --f-body:"DM Sans",system-ui,sans-serif;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",sans-serif; --f-body:"DM Sans",system-ui,sans-serif; color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#101513; --surface:#18201d; --surface2:#1e2723; --fg:#e7eee9; --muted:#9aa7a0; --line:#2a352f;
@@ -389,7 +390,7 @@ function copyText(txt){
 A.toast=toast;A.uid=uid;A.clone=clone;A.pmap=pmap;A.modal=modal;A.closeModal=closeModal;A.xlsxSave=xlsxSave;A.copyText=copyText;A.download=download;
 
 /* ---------- gravação com atraso (um update por vez por documento) ---------- */
-var pending={},timers={},inflight={},dirty={};
+var pending={},timers={},inflight={},dirty={};A.dirty=dirty;
 function deepAssign(t,s){Object.keys(s).forEach(function(k){var v=s[k];if(v&&typeof v==='object'&&!Array.isArray(v)){t[k]=t[k]&&typeof t[k]==='object'?t[k]:{};deepAssign(t[k],v)}else t[k]=v})}
 function queue(path,patch,delay){
   var p=pending[path]||(pending[path]={});deepAssign(p,clone(patch));dirty[path]=true;
@@ -406,12 +407,12 @@ A.queue=queue;A.isDirty=function(p){return !!dirty[p]};
 function snapToMap(snap,prev){var m=new Map();snap.docs.forEach(function(d){var v=d.data();if(v)m.set(d.id,Object.assign({id:d.id},v))});return m}
 function subscribePrices(ym){
   if(unsubPrices){unsubPrices();unsubPrices=null}
-  S.prices=new Map();
+  S.prices=new Map();S.pricesFor=null;
   if(!ym){render();return}
   unsubPrices=db.collection('surveys/'+ym+'/prices').onSnapshot(function(snap){
     var m=snapToMap(snap);
     m.forEach(function(v,k){var path='surveys/'+ym+'/prices/'+k;if(dirty[path]&&S.prices.has(k))m.set(k,S.prices.get(k))});
-    S.prices=m;S.hist[ym]=m;render();
+    S.prices=m;S.hist[ym]=m;S.pricesFor=ym;render();setTimeout(function(){A.reconcile&&A.reconcile()},0);
   },function(){toast('Não foi possível carregar a pesquisa.')});
 }
 function selectMonth(ym){
@@ -432,13 +433,15 @@ A.isArchived=isArchived;
 function snapDoc(p,old){return {pid:p.id,name:p.name,category:p.category,unit:p.unit,ideal:p.ideal,stock:p.stock,stores:old&&old.stores?clone(old.stores):{},chosen:null}}
 A.snapDoc=snapDoc;
 function activeProducts(){return Array.from(S.products.values()).filter(function(p){return p.active!==false})}
+function needProducts(){return activeProducts().filter(function(p){return C.needOf(p).ctl>0})}
+A.needProducts=needProducts;
 A.activeProducts=activeProducts;
 function createSurvey(ym,copyFrom){
   if(S.surveys.has(ym)){toast('Já existe uma pesquisa para '+C.ymLabel(ym));return Promise.resolve(false)}
   var src=copyFrom?loadHist(copyFrom):Promise.resolve(null);
   return src.then(function(old){
     return db.doc('surveys/'+ym).set({ym:ym,status:'open',createdAt:new Date().toISOString(),copiedFrom:copyFrom||null}).then(function(){
-      return pmap(activeProducts(),function(p){return db.doc('surveys/'+ym+'/prices/'+p.id).set(snapDoc(p,old&&old.get(p.id)))});
+      return pmap(needProducts(),function(p){return db.doc('surveys/'+ym+'/prices/'+p.id).set(snapDoc(p,old&&old.get(p.id)))});
     });
   }).then(function(){selectMonth(ym);toast('Pesquisa de '+C.ymLabel(ym)+' criada');return true})
    .catch(function(){toast('Não foi possível criar a pesquisa.');return false});
@@ -495,7 +498,8 @@ views.produtos={
      +'<button data-act="psort">'+(f.sort==='az'?'A → Z':'Z → A')+'</button>'
      +'<span class="sp muted small">'+n+' produtos · '+act+' ativos</span></div>'
      +'<div class="bar"><button class="primary" data-act="pnew">+ Novo produto</button><button data-act="pimport">Importar planilha</button><button data-act="pexport">Exportar lista</button></div>'
-     +'<div id="plist">'+productRows()+'</div>';
+     +'<div id="plist">'+productRows()+'</div>'
+     +'<div class="muted small" style="margin-top:28px;text-align:center"><button class="sm danger" data-act="resetall">Apagar todos os dados e começar do zero</button></div>';
   },
   refresh:function(){var ae=document.activeElement;if(ae&&ae.closest&&ae.closest('#plist'))return;var l=$('#plist');if(l)l.innerHTML=productRows()}
 };
@@ -749,11 +753,11 @@ A.start=function(){
       try{var t=sessionStorage.getItem('mi_tab');if(t&&views[t])S.tab=t}catch(e){}
       if(S.ym)subscribePrices(S.ym);else render()}else if(S.ready)render()}
     var fail=function(){$('#view').innerHTML='<div class="empty">Não foi possível carregar os dados. Recarregue a página.</div>'};
-    db.collection('products').onSnapshot(function(s){S.products=snapToMap(s);loaded.p=true;ready()},fail);
+    db.collection('products').onSnapshot(function(s){S.products=snapToMap(s);loaded.p=true;ready();setTimeout(function(){A.reconcile&&A.reconcile()},0)},fail);
     db.collection('surveys').onSnapshot(function(s){S.surveys=snapToMap(s);loaded.s=true;
       if(S.ready&&S.ym&&!S.surveys.has(S.ym)){var l=surveyList();selectMonth(l.length?l[l.length-1]:null)}
       ready()},fail);
-    db.collection('purchases').onSnapshot(function(s){S.purchases=snapToMap(s);loaded.c=true;ready()},fail);
+    db.collection('purchases').onSnapshot(function(s){S.purchases=snapToMap(s);loaded.c=true;ready();setTimeout(function(){A.reconcile&&A.reconcile()},0)},fail);
   });
   $('#tabs').addEventListener('click',function(e){var b=e.target.closest('button[data-tab]');if(b)go(b.dataset.tab)});
   $('#ymSel').addEventListener('change',function(e){if(e.target.value)selectMonth(e.target.value)});
@@ -845,14 +849,14 @@ views.pesquisa={
     var docs=f.needOnly?all.filter(function(d){return C.needOf(d).ctl>0}):all,counts=pesquisaCats(docs),hidden=all.length-docs.length;
     var priced=docs.filter(function(d){return C.analyze(d).filled>0}).length;
     var cat=f.cat;if(cat==null)cat=CATS.find(function(c){return counts[c]})||'todas';
-    var missing=A.activeProducts().filter(function(p){return !S.prices.has(p.id)}).length;
+    var missing=A.needProducts().filter(function(p){return !S.prices.has(p.id)}).length;
     var h='';
     if(arch)h+='<div class="note warn">Esta pesquisa está arquivada e não pode ser editada. <button class="sm" data-act="reopen">Reabrir pesquisa</button></div>';
     if(!arch&&missing)h+='<div class="note">Há '+missing+' produto'+(missing>1?'s':'')+' ativo'+(missing>1?'s':'')+' fora desta pesquisa. <button class="sm" data-act="addmissing">Incluir na pesquisa</button></div>';
     h+='<div class="bar"><b>'+C.ymLabel(S.ym)+'</b><div class="progress" aria-hidden="true"><i style="width:'+(docs.length?Math.round(priced/docs.length*100):0)+'%"></i></div><span class="muted small">'+priced+' de '+docs.length+' produtos pesquisados</span>'
      +'<span class="sp"></span>'+(arch?'':'<button class="sm" data-act="sync">'+(S.confirm==='sync'?'Confirmar sincronização':'Sincronizar estoque')+'</button><button class="sm" data-act="archive">Encerrar pesquisa</button>')+'</div>';
     h+='<div class="bar"><div class="chips" id="pcats">'+CATS.filter(function(c){return counts[c]}).map(function(c){return '<button class="chip" data-act="scat" data-c="'+c+'" aria-pressed="'+(cat===c)+'">'+c+' ('+counts[c]+')</button>'}).join('')+'<button class="chip" data-act="scat" data-c="todas" aria-pressed="'+(cat==='todas')+'">Todas</button></div></div>';
-    h+='<div class="bar"><input type="text" id="sq" placeholder="Buscar produto" aria-label="Buscar produto" value="'+esc(f.q)+'"><label class="sw"><input type="checkbox" id="sneed"'+(f.needOnly?'':' checked')+'> Mostrar também produtos com estoque suficiente</label></div>'
+    h+='<div class="bar"><input type="text" id="sq" placeholder="Buscar produto" aria-label="Buscar produto" value="'+esc(f.q)+'"></div>'
      +(hidden&&f.needOnly?'<div class="muted small" style="margin-bottom:10px">'+hidden+(hidden===1?' produto com estoque suficiente não entra':' produtos com estoque suficiente não entram')+' na pesquisa deste mês.</div>':'');
     h+='<div id="slist"></div>';
     return h;
@@ -902,12 +906,48 @@ document.addEventListener('change',function(e){
   var pc=t.closest&&t.closest('.pc');
   if(pc&&(t.tagName==='SELECT'||t.type==='checkbox'))onField(t,pc);
 });
+
+/* Mantém a pesquisa aberta alinhada aos produtos: só entra quem precisa comprar (ideal > estoque). */
+var recBusy=false;
+function reconcile(){
+  if(!S.ready||!S.ym||recBusy||!A.db||S.pricesFor!==S.ym)return;
+  var sv=S.surveys.get(S.ym);if(!sv||sv.status==='archived')return;
+  var ops=[],ym=S.ym;
+  function locked(d){return C.analyze(d).filled>0||(S.purchases.get(ym+'__'+d.id)&&S.purchases.get(ym+'__'+d.id).status)||(A.dirty||{})['surveys/'+ym+'/prices/'+d.id]}
+  S.products.forEach(function(p){
+    var d=S.prices.get(p.id),act=p.active!==false,need=C.needOf(p).ctl>0;
+    if(!d){if(act&&need)ops.push(function(){return A.db.doc('surveys/'+ym+'/prices/'+p.id).set(A.snapDoc(p,null))});return}
+    if(locked(d))return;
+    if(!act||!need){ops.push(function(){return A.db.doc('surveys/'+ym+'/prices/'+p.id).delete()});return}
+    if(Number(d.stock)!==Number(p.stock)||Number(d.ideal)!==Number(p.ideal)||d.unit!==p.unit||d.name!==p.name||d.category!==p.category)
+      ops.push(function(){return A.db.doc('surveys/'+ym+'/prices/'+p.id).update({name:p.name,category:p.category,unit:p.unit,ideal:p.ideal,stock:p.stock})});
+  });
+  S.prices.forEach(function(d,k){if(!S.products.has(k)&&!locked(d))ops.push(function(){return A.db.doc('surveys/'+ym+'/prices/'+k).delete()})});
+  if(!ops.length)return;
+  recBusy=true;
+  A.pmap(ops,function(f){return f()}).catch(function(){}).then(function(){recBusy=false});
+}
+A.reconcile=reconcile;
 var AC=A.actions;
+AC.resetall=function(){
+  A.modal('<h2>Apagar todos os dados?</h2><div class="note warn">Isto apaga <b>todos os produtos, pesquisas, preços, compras e relatórios</b>. Não dá para desfazer.</div>'
+   +'<label>Para confirmar, digite ZERAR<input type="text" id="rzTxt" autocomplete="off"></label><div class="err" id="rzErr" role="alert"></div>'
+   +'<div class="acts"><button class="danger" data-act="resetok">Apagar tudo</button><button data-act="close">Cancelar</button></div>');
+};
+AC.resetok=function(b){
+  if(($('#rzTxt').value||'').trim().toUpperCase()!=='ZERAR'){$('#rzErr').textContent='Digite ZERAR para confirmar.';return}
+  b.disabled=true;b.textContent='Apagando…';
+  var DB=A.db,del=function(col){return DB.collection(col).get().then(function(sn){return A.pmap(sn.docs,function(d){return DB.doc(col+'/'+d.id).delete()})})};
+  DB.collection('surveys').get().then(function(sn){return A.pmap(sn.docs,function(d){return del('surveys/'+d.id+'/prices')})})
+   .then(function(){return del('surveys')}).then(function(){return del('purchases')}).then(function(){return del('products')})
+   .then(function(){try{localStorage.removeItem('mi_ym')}catch(e){}A.S.hist={};A.closeModal();A.toast('Sistema zerado. Pode começar a usar.');A.go('produtos')})
+   .catch(function(){b.disabled=false;b.textContent='Apagar tudo';$('#rzErr').textContent='Não foi possível apagar tudo. Tente de novo.'});
+};
 AC.goprod=function(){A.go('produtos')};
 AC.newsurvey=function(){A.newSurveyDialog()};
 AC.scat=function(b){S.sf.cat=b.dataset.c;A.render()};
 AC.addmissing=function(){
-  var list=A.activeProducts().filter(function(p){return !S.prices.has(p.id)});
+  var list=A.needProducts().filter(function(p){return !S.prices.has(p.id)});
   A.pmap(list,function(p){return A.db.doc('surveys/'+S.ym+'/prices/'+p.id).set(A.snapDoc(p,null))}).then(function(){A.toast(list.length+' produtos incluídos')}).catch(function(){A.toast('Não foi possível incluir os produtos.')});
 };
 AC.sync=function(){
