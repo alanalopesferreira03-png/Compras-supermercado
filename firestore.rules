@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Só quem entra com o seu e-mail lê e altera os dados.
+    match /{document=**} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email in ['SEU_EMAIL@gmail.com'];
+    }
+  }
+}

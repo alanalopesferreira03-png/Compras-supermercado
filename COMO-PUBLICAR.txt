@@ -1,0 +1,68 @@
+MERCADO INTELIGENTE - COMO COLOCAR NO AR (NETLIFY + FIREBASE)
+=============================================================
+
+Esta pasta é o sistema completo. Os dados ficam num banco gratuito do Google
+(Firebase) e o site fica no Netlify. Só entra quem tiver e-mail e senha cadastrados
+por você (você e quem mais você quiser, por exemplo seu marido).
+Reserve uns 20 minutos na primeira vez.
+
+Arquivos da pasta:
+  index.html           o sistema inteiro
+  firebase-config.js   onde você cola a configuração do Firebase (único arquivo que você edita)
+  shim.js              liga o sistema ao Firebase e cuida do login (não mexer)
+  firestore.rules      texto das regras de segurança (passo 2)
+  netlify.toml         configuração do Netlify (não mexer)
+
+
+PASSO 1 - Criar o projeto no Firebase
+-------------------------------------
+1. Entre em https://console.firebase.google.com com a sua conta Google.
+2. "Criar um projeto", dê um nome (ex.: mercado-inteligente). Pode desligar o Analytics.
+3. Menu da esquerda > "Criação" > "Firestore Database" > "Criar banco de dados".
+   Modo PRODUÇÃO, região southamerica-east1 (São Paulo).
+4. "Criação" > "Authentication" > "Vamos começar" > "Método de login" > ative "E-mail/senha".
+5. Aba "Usuários" > "Adicionar usuário": cadastre o seu e-mail e uma senha.
+   Se o seu marido for usar, cadastre também o e-mail e a senha dele.
+
+
+PASSO 2 - Regras de segurança
+-----------------------------
+1. Em Firestore Database, aba "Regras". Apague tudo e cole o conteúdo de firestore.rules.
+2. Troque SEU_EMAIL@gmail.com pelos e-mails cadastrados no passo 1.5, entre aspas e
+   separados por vírgula. Exemplo:
+     in ['alana@gmail.com', 'marido@gmail.com']
+3. Clique em "Publicar".
+Assim só esses e-mails leem ou alteram os dados, mesmo que alguém descubra o link do site.
+
+
+PASSO 3 - Colar a configuração
+------------------------------
+1. No Firebase, engrenagem ao lado de "Visão geral do projeto" > "Configurações do projeto".
+2. Em "Seus apps", clique no ícone "</>" (Web), dê um apelido e registre (sem Firebase Hosting).
+3. Copie apiKey, authDomain, projectId e appId do bloco que aparecer.
+4. Abra firebase-config.js no Bloco de Notas, troque cada COLE_AQUI pelo valor (mantendo as aspas) e salve.
+
+
+PASSO 4 - Colocar no Netlify
+----------------------------
+1. Abra https://app.netlify.com/drop, entre ou crie uma conta.
+2. Extraia o ZIP e arraste a pasta inteira (netlify-mercado) para a área indicada.
+3. Em "Site configuration" > "Change site name" escolha um nome, ex.: mercado-inteligente.
+4. Volte ao Firebase > Authentication > "Configurações" > "Domínios autorizados" >
+   "Adicionar domínio" e cadastre o endereço do site sem https://
+   (ex.: mercado-inteligente.netlify.app). Sem isso o login não funciona.
+5. Abra o link, entre com e-mail e senha e salve nos favoritos / "Adicionar à tela inicial" do celular.
+
+
+PASSO 5 - Primeiro uso
+----------------------
+1. Aba "Produtos": cadastre os itens, ou use "Importar planilha" para trazer a planilha de outubro.
+2. Aba "Pesquisa": digite os preços em cada mercado. As listas por supermercado, a comparação
+   e os relatórios aparecem sozinhos a partir dos preços digitados.
+3. "Encerrar pesquisa" só trava a edição dos preços do mês e guarda no histórico.
+
+Observação: os dados que você já digitou no sistema dentro do Claude NÃO vêm para cá
+automaticamente. Para levar, use "Exportar" em Produtos e importe aqui depois.
+
+Para atualizar o sistema no futuro (ajuste pedido ao Claude): arraste a pasta de novo em
+Netlify > aba "Deploys". Lembre de manter o seu firebase-config.js preenchido.
