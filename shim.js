@@ -10,6 +10,7 @@
       var ov=document.createElement('div');
       ov.style.cssText='position:fixed;inset:0;z-index:99999;background:var(--bg,#f2f4f3);display:flex;align-items:center;justify-content:center;padding:16px';
       ov.innerHTML='<form style="background:var(--surface,#fff);border:1px solid var(--line,#dce2df);border-radius:14px;padding:22px;width:100%;max-width:340px;display:grid;gap:12px;font-family:var(--f-body,system-ui)">'
+       +'<img src="cover.png" alt="" style="width:100%;border-radius:10px;display:block">'
        +'<h2 style="margin:0;font-family:var(--f-display,inherit)">Mercado Inteligente</h2><p style="margin:0;color:var(--muted,#64706b);font-size:.9rem">Entre para acessar o sistema.</p>'
        +'<input type="email" id="lg_e" placeholder="E-mail" autocomplete="username" required style="padding:10px;border-radius:8px;border:1px solid var(--line,#ccc);font:inherit;font-size:16px">'
        +'<input type="password" id="lg_p" placeholder="Senha" autocomplete="current-password" required style="padding:10px;border-radius:8px;border:1px solid var(--line,#ccc);font:inherit;font-size:16px">'

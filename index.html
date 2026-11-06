@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>Mercado Inteligente</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2447c9">
+<meta property="og:title" content="Mercado Inteligente">
+<meta property="og:description" content="Controle de compras da casa">
+<meta property="og:image" content="cover.png">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -126,6 +133,7 @@ tr.hl td{background:var(--good-soft)}
 .modal:has(#pfName) .acts button{min-height:36px;padding:6px 14px}
 html{-webkit-text-size-adjust:100%;touch-action:manipulation}
 @media (max-width:760px){input,select,textarea{font-size:16px!important}.modal:has(#pfName) .two{grid-template-columns:1fr 1fr}.overlay{padding:10px}}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:11px;flex:none}
 [hidden]{display:none!important}
 @media (max-width:760px){
   .stores{grid-template-columns:1fr}
@@ -143,7 +151,7 @@ html{-webkit-text-size-adjust:100%;touch-action:manipulation}
 
 <div class="app">
   <header class="top">
-    <div class="brand"><h1>Mercado Inteligente</h1><span>Controle de compras</span></div>
+    <div class="brand"><img src="icon-192.png" alt="" class="logo"><div><h1>Mercado Inteligente</h1><span>Controle de compras</span></div></div>
     <div class="monthbar"><select id="ymSel" aria-label="Pesquisa do mês"></select><button id="newSurvey" class="primary">Nova pesquisa</button></div>
   </header>
   <nav class="tabs" id="tabs" role="tablist">
